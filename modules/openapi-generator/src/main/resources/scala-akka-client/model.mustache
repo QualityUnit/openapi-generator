@@ -12,26 +12,28 @@ case class {{classname}} (
   {{#description}}
   /* {{{description}}} */
   {{/description}}
-  {{{name}}}: {{^required}}Option[{{/required}}{{^isEnum}}{{dataType}}{{/isEnum}}{{#isEnum}}{{classname}}Enums.{{datatypeWithEnum}}{{/isEnum}}{{^required}}] = None{{/required}}{{#hasMore}},{{/hasMore}}
+  {{{name}}}: {{^required}}Option[{{/required}}{{^isEnum}}{{dataType}}{{/isEnum}}{{#isEnum}}{{classname}}Enum{{/isEnum}}{{^required}}] = None{{/required}}{{#hasMore}},{{/hasMore}}
   {{/vars}}
 ) extends ApiModel
 
 {{#hasEnums}}
+sealed trait {{classname}}Enum extends ApiEnum
+
 object {{classname}}Enums {
-
   {{#vars}}
   {{#isEnum}}
-  type {{datatypeWithEnum}} = {{datatypeWithEnum}}.Value
-  {{/isEnum}}
-  {{/vars}}
-  {{#vars}}
-  {{#isEnum}}
-  object {{datatypeWithEnum}} extends Enumeration {
 {{#_enum}}
-    val {{#fnEnumEntry}}{{.}}{{/fnEnumEntry}} = Value("{{.}}")
+    case object {{#fnEnumEntry}}{{.}}{{/fnEnumEntry}} extends {{classname}}Enum { val value = "{{.}}" }
 {{/_enum}}
-  }
 
+    def fromString(value: String): {{classname}}Enum = value match {
+{{#_enum}}
+      case "{{.}}" =>
+        {{classname}}Enums.{{#fnEnumEntry}}{{.}}{{/fnEnumEntry}}
+{{/_enum}}
+      case unknown =>
+        throw new MappingException(s"Can't convert $unknown to {{classname}}Enum")
+    }
   {{/isEnum}}
   {{/vars}}
 }
